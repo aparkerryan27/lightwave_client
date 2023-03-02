@@ -12,7 +12,7 @@ struct MyData {
     int16_t r,g,b;
 } d;
 
-clock_t cp_start, cp_end;
+clock_t cp1_start, cp2_start;
 double execution_time;
 
 //MARK: recieve report information and send to data plotter
@@ -35,40 +35,45 @@ struct : Client {
         //send out to virtual serial port that can be read by Arduino Plotter
         data_count += 1;
         cout << data_count << "," << *report << endl; //originally sent to strm;
-        cp_end = clock();
-        execution_time = ((double)(cp_end-cp_start))/CLOCKS_PER_SEC * 1000;
-        cout << "roundtrip (ms): " << execution_time << endl;
+        //execution_time = ((double)(clock()-cp_start))/CLOCKS_PER_SEC * 1000;
+        //cout << "roundtrip (ms): " << execution_time << endl;
     }
-} c;
+} c1, c2;
 
 int main ( ) {
     //Clear the file
-    ofstream temp;
-    temp.open("data.csv", std::ofstream::out | std::ofstream::trunc);
-    temp.close();
+    //ofstream temp;
+    //temp.open("data.csv", std::ofstream::out | std::ofstream::trunc);
+    //temp.close();
 
     //Write analytics data headers out
-    c.strm.open("../data.csv", ios::out);
-    c.strm << "count,r,g,b" << endl;
+    //c.strm.open("../data.csv", ios::out);
+    //c.strm << "count,r,g,b" << endl;
 
     //connect to node
-    c.connect("10.0.0.154", 4500); //NOTE: change IP when on new network
+    c1.connect("10.0.0.154", 4500); //NOTE: change IP when on new network
+    cout << "connected." << endl;
+    c2.connect("10.0.0.155", 4500); //NOTE: change IP when on new network
     cout << "connected." << endl;
    
     for (int i = 0; i < 10; i++) {
         d.r = i * 10; //rand in the future but for now make it sequential so we can make sure data is sequential
         d.g = i * 10;
         d.b = i * 10;
-        cp_start = clock();
-        ((Connection) c).send_data((char *) &d, sizeof(d));
+        //cp_start = clock();
+        ((Connection) c1).send_data((char *) &d, sizeof(d));
+        cout << "sent data" << endl;
+        ((Connection) c2).send_data((char *) &d, sizeof(d));
         cout << "sent data" << endl;
 
-        this_thread::sleep_for(0.5s);
+
+        this_thread::sleep_for(10s);
     }
 
     this_thread::sleep_for(20s);
     cout << "disconnecting";
-    c.strm.close();
+    //c1.strm.close();
 
-    c.disconnect();
+    c1.disconnect();
+    c2.disconnect();
 }
